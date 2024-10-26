@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Country, Region, SmallCountry } from '../interfaces/country.interfaces';
-import { Observable, of, tap } from 'rxjs';
+import { map, Observable, of, tap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 
 // NO HACE FALTA QUE IMPORTE UN SERVICIO PORQUE VIENE PROVEIDO EN EL RUTH
@@ -28,11 +28,32 @@ export class CountriesService {
 
     const url: string = `${this.baseUrl}/region/${region}?fields=cca3,name,borders`;
 
-    return this.httpClient.get<SmallCountry[]>(url)
+    return this.httpClient.get<Country[]>(url)
       .pipe(
+        map(countries => countries.map(country => ({
+          name: country.name.common,
+          cca3: country.cca3,
+          // OPERADOR DE COALESCENCIA NULA
+          borders: country.borders ?? []
+        }))),
         // EL TAP DISPARA EFECTOS SECUNDARIOS
-        tap(response => console.log({response}))
+        //tap(response => console.log({response}))
       );
+  }
+
+  getCountryByAlphaCode(alphaCode: string): Observable<SmallCountry>{
+
+    const url = `${this.baseUrl}/alpha/${alphaCode}?fields=cca3,name,borders`;
+
+    return this.httpClient.get<Country>(url)
+      .pipe(
+        map( country => ({
+          name: country.name.common,
+          cca3: country.cca3,
+          borders: country.borders ?? []
+        }))
+      )
+
   }
 
 }
